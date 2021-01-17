@@ -3,6 +3,7 @@ import Text.ParserCombinators.Parsec hiding (spaces)
 import Numeric (readHex, readOct, readFloat)
 import Data.Ratio ((%))
 import Data.Complex (Complex (..))
+import Control.Monad (liftM)
 
 main :: IO ()
 main = do
@@ -11,7 +12,7 @@ main = do
 
 
 readExpr :: String -> String
-readExpr input = case parse (spaces >> parseExpr) "lisp" input of
+readExpr input = case parse parseExpr "lisp" input of
     Left err -> "No match: " ++ show err
     Right val -> show val
 
@@ -35,6 +36,33 @@ parseExpr = parseAtom
          <|> try parseRational
          <|> try parseComplex
          <|> parseNumber
+         <|> parseQuote
+         <|> parseQuasiquote
+         <|> do _ <- char '('
+                x <- try parseList <|> parseDottedList
+                _ <- char ')'
+                return x
+
+parseList :: Parser LispVal
+parseList = liftM List $ sepBy parseExpr spaces
+
+parseDottedList :: Parser LispVal
+parseDottedList = do
+                    x <- endBy parseExpr spaces
+                    xs <- char '.' >> spaces >> parseExpr
+                    return $ DottedList x xs
+
+parseQuote :: Parser LispVal
+parseQuote = do
+    _ <- char '\''
+    x <- parseExpr
+    return $ List [Atom "quote", x]
+
+parseQuasiquote :: Parser LispVal
+parseQuasiquote = do
+                    _ <- char ','
+                    x <- parseExpr
+                    return $ List [Atom "quasiquote", x]
 
 parseAtom :: Parser LispVal
 parseAtom = do
