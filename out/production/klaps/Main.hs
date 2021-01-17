@@ -1,6 +1,8 @@
 module Main where
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Numeric (readHex, readOct, readFloat)
+import Data.Ratio ((%))
+import Data.Complex (Complex (..))
 
 main :: IO ()
 main = do
@@ -9,7 +11,7 @@ main = do
 
 
 readExpr :: String -> String
-readExpr input = case parseExpr "lisp" input of
+readExpr input = case parse (spaces >> parseExpr) "lisp" input of
     Left err -> "No match: " ++ show err
     Right val -> show val
 
@@ -18,16 +20,20 @@ data LispVal = Atom String
              | DottedList [LispVal] LispVal
              | Number Integer
              | Float Float
+             | Rational Rational
+             | Complex (Complex Float)
              | String String
              | Character String
              | Bool Bool
              deriving Show
 
-parseExpr :: SourceName -> String -> Either ParseError LispVal
-parseExpr = parse $ parseAtom
+parseExpr :: Parser LispVal
+parseExpr = parseAtom
          <|> parseString
          <|> parseCharacter
-         <|> parseFloat
+         <|> try parseFloat
+         <|> try parseRational
+         <|> try parseComplex
          <|> parseNumber
 
 parseAtom :: Parser LispVal
@@ -75,9 +81,26 @@ parseString = do
                 return $ String x
 
 parseFloat :: Parser LispVal
-parseFloat = do _ <- try $ string "#f"
-                many1 (digit <|> char '.') >>= (return . Float. fst . head . readFloat)
-                
+parseFloat = do
+                whole <- many1 digit
+                _ <- char '.'
+                frac <- many1 digit
+                return . Float . fst . head . readFloat $ whole ++ "." ++ frac
+
+parseRational :: Parser LispVal
+parseRational = do
+                   numerator <- many1 digit
+                   _ <- char '/'
+                   denominator <- many1 digit
+                   return $ Rational (read numerator % read denominator)
+
+parseComplex :: Parser LispVal
+parseComplex = do
+                  real <- many1 digit
+                  _ <- char '+'
+                  imaginary <- many1 digit
+                  _ <- char 'i'
+                  return $ Complex (read real :+ read imaginary)
 
 parseCharacter :: Parser LispVal
 parseCharacter = try (string "\\#") >>= (return . String)
