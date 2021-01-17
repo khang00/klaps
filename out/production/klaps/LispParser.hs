@@ -5,7 +5,6 @@ import Numeric (readHex, readOct, readFloat)
 import Data.Ratio ((%))
 import Data.Complex (Complex (..))
 import Control.Monad (liftM)
-import LispError (ThrowsError, LispError(..))
 import LispVal
 import Control.Monad.Error.Class (throwError)
 

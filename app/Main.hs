@@ -1,7 +1,7 @@
 module Main where
 import LispParser
 import LispEvaluator
-import LispEnvironment
+import LispVal
 import Control.Monad.Cont (liftM)
 import System.IO
 

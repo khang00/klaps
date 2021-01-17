@@ -3,9 +3,7 @@
 module LispEvaluator where
 import Control.Monad.Error.Class (throwError, catchError)
 import LispVal
-import LispError(ThrowsError, LispError(..))
 import Control.Monad.Cont (liftM)
-import LispEnvironment
 
 eval :: Environment -> LispVal -> IOThrowsError LispVal
 eval _ val@(String _) = return val
