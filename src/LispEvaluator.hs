@@ -5,22 +5,22 @@ import Control.Monad.Error.Class (throwError, catchError)
 import LispVal
 import LispError(ThrowsError, LispError(..))
 import Control.Monad.Cont (liftM)
+import LispEnvironment
 
-eval :: LispVal -> ThrowsError LispVal
-eval val@(String _)                                  = return val
-eval val@(Number _)                                  = return val
-eval val@(Bool _)                                    = return val
-eval (List [Atom "quote", val])                      = return val
-eval (List [Atom "quasiquote", val])                 = eval val
-eval (List [Atom "if", predicate, consequence, alt]) = do result <- eval predicate
-                                                          case result of
-                                                               Bool False -> eval alt
-                                                               _ -> eval consequence
-eval (List (Atom func : args))                      = mapM eval args >>= apply func
-eval (List [])                                      = return $ LispVal.List []
-eval val@(List _)                                   = return val
-eval badForm                                        = throwError $
-                                                      BadSpecialForm "Unrecognized special form" badForm
+eval :: Environment -> LispVal -> IOThrowsError LispVal
+eval _ val@(String _) = return val
+eval _ val@(Number _) = return val
+eval _ val@(Bool _) = return val
+eval env (Atom identifier) = getVar env identifier
+eval _ (List [Atom "quote", val]) = return val
+eval env (List [Atom "if", predicate, consequence, alt]) = do result <- eval env predicate
+                                                              case result of
+                                                                   Bool False -> eval env alt
+                                                                   _ -> eval env consequence
+eval env (List [Atom "set!", Atom var, form]) = eval env form >>= setVar env var
+eval env (List [Atom "define", Atom var, form]) = eval env form >>= defineVar env var
+eval env (List (Atom func : args)) = mapM (eval env) args >>= liftThrows . apply func
+eval _ badForm = throwError $ BadSpecialForm "Unrecognized special form" badForm
 
 eqv :: [LispVal] -> ThrowsError LispVal
 eqv [Bool arg1, Bool arg2]             = return $ Bool $ arg1 == arg2
@@ -145,7 +145,7 @@ numericBinop op params       = mapM unpackNum params >>= return . Number . foldl
 data Unpacker = forall a. Eq a => AnyUnpacker (LispVal -> ThrowsError a)
 
 equal :: [LispVal] -> ThrowsError LispVal
-equal [arg1, arg2] = do primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2) 
+equal [arg1, arg2] = do primitiveEquals <- liftM or $ mapM (unpackEquals arg1 arg2)
                                            [AnyUnpacker unpackNum, AnyUnpacker unpackStr, AnyUnpacker unpackBool]
                         eqvEquals <- eqv [arg1, arg2]
                         return $ Bool $ (primitiveEquals || let (Bool x) = eqvEquals in x)

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1672a1af7b6d5726feb45bc7135badb550c985f9ae8ed8537180ac417eec935a
+-- hash: 56247d4b956cd7a0bc35309a195ef4f9486dc66645a61a3b7458dded85b36cb4
 
 name:           klaps
 version:        0.1.0.0
@@ -27,6 +27,7 @@ source-repository head
 
 library
   exposed-modules:
+      LispEnvironment
       LispError
       LispEvaluator
       LispParser
