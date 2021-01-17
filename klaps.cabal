@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1485a2afe69adf22dfd85e39cff062d59179495e67e670afc85806416caa337d
+-- hash: 9c6a427f75991efb344a2280bb3c726521ad4b6e46e35100ba85487e00527e99
 
 name:           klaps
 version:        0.1.0.0
@@ -28,7 +28,10 @@ source-repository head
 library
   exposed-modules:
       Lib
+      LispError
+      LispEvaluator
       LispParser
+      LispVal
   other-modules:
       Paths_klaps
   hs-source-dirs:
@@ -36,6 +39,7 @@ library
   build-depends:
       base >=4.7 && <5
     , containers
+    , mtl
     , parsec
   default-language: Haskell2010
 
@@ -50,6 +54,7 @@ executable klaps-exe
       base >=4.7 && <5
     , containers
     , klaps
+    , mtl
     , parsec
   default-language: Haskell2010
 
@@ -65,5 +70,6 @@ test-suite klaps-test
       base >=4.7 && <5
     , containers
     , klaps
+    , mtl
     , parsec
   default-language: Haskell2010

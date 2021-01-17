@@ -1,22 +1,18 @@
-module LispParser (parseLisp) where
+module LispParser where
 
 import Text.ParserCombinators.Parsec hiding (spaces)
 import Numeric (readHex, readOct, readFloat)
 import Data.Ratio ((%))
 import Data.Complex (Complex (..))
 import Control.Monad (liftM)
+import LispError (ThrowsError, LispError(..))
+import LispVal
+import Control.Monad.Error.Class (throwError)
 
-data LispVal = Atom String
-             | List [LispVal]
-             | DottedList [LispVal] LispVal
-             | Number Integer
-             | Float Float
-             | Rational Rational
-             | Complex (Complex Float)
-             | String String
-             | Character String
-             | Bool Bool
-             deriving Show
+readExpr :: String -> ThrowsError LispVal
+readExpr input = case parseLisp "lisp" input of
+    Left err -> throwError $ Parser err
+    Right val -> return val
 
 parseLisp :: SourceName -> String -> Either ParseError LispVal
 parseLisp = parse parseExpr

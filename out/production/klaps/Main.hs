@@ -1,12 +1,11 @@
 module Main where
 import LispParser
+import LispEvaluator
+import Control.Monad.Cont (liftM)
+import LispError (trapError, extractValue)
 
 main :: IO ()
 main = do
-          expr <- getLine
-          putStrLn (readExpr expr)
-
-readExpr :: String -> String
-readExpr input = case LispParser.parseLisp "lisp" input of
-    Left err -> "No match: " ++ show err
-    Right val -> show val
+     args <- getLine
+     evaled <- return $ liftM show $ readExpr args >>= eval
+     putStrLn $ extractValue $ trapError evaled
