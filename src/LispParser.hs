@@ -8,10 +8,17 @@ import LispVal
 import Numeric (readFloat, readHex, readOct)
 import Text.ParserCombinators.Parsec hiding (spaces)
 
+readOrThrow :: Parser a -> String -> ThrowsError a
+readOrThrow parser input = case parse parser "lisp" input of
+    Left err  -> throwError $ Parser err
+    Right val -> return val
+
+
 readExpr :: String -> ThrowsError LispVal
-readExpr input = case parseLisp "lisp" input of
-  Left err -> throwError $ Parser err
-  Right val -> return val
+readExpr = readOrThrow parseExpr
+
+readExprList :: String -> ThrowsError [LispVal]
+readExprList = readOrThrow (endBy parseExpr spaces)
 
 parseLisp :: SourceName -> String -> Either ParseError LispVal
 parseLisp = parse parseExpr

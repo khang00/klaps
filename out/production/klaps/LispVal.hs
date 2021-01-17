@@ -5,6 +5,7 @@ import Control.Monad.Error.Class (MonadError, catchError)
 import Control.Monad.Except (ExceptT, runExceptT, throwError)
 import Data.Complex (Complex)
 import Data.IORef
+import GHC.IO.Handle.Types (Handle)
 import Text.ParserCombinators.Parsec (ParseError)
 
 instance Show LispVal where show = showVal
@@ -27,6 +28,8 @@ data LispVal
         body :: [LispVal],
         closure :: Environment
       }
+  | IOFunc ([LispVal] -> IOThrowsError LispVal)
+  | Port Handle
 
 showVal :: LispVal -> String
 showVal (List contents) = "(" ++ wordsList contents ++ ")"
@@ -48,6 +51,8 @@ showVal (Func {params = args, vararg = varargs, body = _, closure = _}) =
            Just arg -> " . " ++ arg
        )
     ++ ") ...)"
+showVal (Port _) = "<IO port>"
+showVal (IOFunc _) = "<IO primitive>"
 
 type IOThrowsError = ExceptT LispError IO
 
